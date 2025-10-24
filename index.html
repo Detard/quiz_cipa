@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz CIPA</title>
+  <link rel="icon" type="image/png" href="images/favicon.png">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #FFC5DE;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .intro, .quiz-container, .results-container {
+      max-width: 600px;
+      margin: auto;
+    }
+
+    input {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 12px 10px;
+      width: 100%;
+      border: none;
+      border-radius: 6px;
+      background: #FE2A8E;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    h1 {
+      font-size: 2em;
+    }
+
+    #quiz-logo {
+      max-width: 550px; /* Tamanho máximo para desktop */
+      margin-bottom: 20px;
+      border-radius: 15px;
+      display: block; /* Para garantir que margin auto funcione se necessário, e consistência */
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .question {
+      font-size: 20px;
+      color: white;
+      margin: 20px 0;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .option {
+      padding: 15px;
+      border-radius: 10px;
+      color: black;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.4s ease, opacity 0.4s ease, visibility 0.4s ease, transform 0.4s ease;
+    }
+
+    .option:nth-child(1) { background-color: #5A85A9; }
+    .option:nth-child(2) { background-color: #ffda89; }
+    .option:nth-child(3) { background-color: #FD8A8A; }
+    .option:nth-child(4) { background-color: #B6CFB6; }
+    .option:nth-child(5) { background-color: #984494; }
+
+    .option.correct {
+      background-color: green !important;
+    }
+
+    .option.wrong {
+      background-color: rgb(223, 17, 17) !important;
+    }
+
+    .option.disabled {
+      pointer-events: none;
+    }
+
+    .option.fade-out {
+      visibility: hidden;
+      opacity: 0;
+    }
+
+    #fullscreen-button {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      width: 30px; /* Tamanho menor */
+      height: 30px; /* Tamanho menor */
+      padding: 0; /* Remover padding padrão */
+      border-radius: 5px; /* Cantos levemente arredondados */
+      background-color: #FE2A8E; /* Cor com transparência */
+      z-index: 1000; /* Garantir que fique acima de outros elementos */
+    }
+
+    .results-container {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+      background: #c5779b;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .results-container h2 {
+      margin-top: 0;
+      color: #f0ac2c;
+    }
+
+    #final-message { font-size: 18px; margin-bottom: 15px; }
+    #final-score { font-size: 2em; font-weight: bold; margin-bottom: 20px; }
+
+    #qr-code-container {
+      margin-top: 10px; /* Espaço acima do QR Code */
+    }
+
+    #qr-code-container img {
+      max-width: 300px; /* Tamanho do QR Code */
+      margin-bottom: 10px; /* Espaço abaixo do QR Code, antes do botão */
+    }
+    #qr-code-container p {
+      font-size: 16px; /* Tamanho da mensagem do QR Code */
+      margin-bottom: 15px; /* Espaço entre a mensagem e o QR Code */
+    }
+
+    #timer {
+      width: 100%;
+      height: 20px;
+      background-color: #444;
+      border-radius: 10px;
+      margin-top: 20px;
+      overflow: hidden;
+    }
+
+    #timer-bar {
+      height: 100%;
+      width: 100%;
+      background-color: #f0ac2c;
+      transition: width 0.1s linear;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+        font-size: 14px;
+      }
+
+      .intro, .quiz-container, .results-container {
+        width: 95%;
+        padding: 15px;
+        margin-top: 15px;
+        margin-bottom: 15px;
+      }
+
+      h1 {
+        font-size: 1.8em;
+      }
+
+      input {
+        font-size: 1em;
+        padding: 12px;
+      }
+
+      button {
+        font-size: 1.1em;
+        padding: 14px 10px;
+      }
+      #quiz-logo {
+        max-width: 300px; /* Tamanho máximo para mobile, ajuste conforme necessário */
+      }
+
+
+      .question {
+        font-size: 1.2em;
+      }
+
+      .option {
+        font-size: 1em;
+        padding: 14px;
+      }
+
+      #final-message { font-size: 1.1em; }
+      #final-score { font-size: 1.2em; font-weight: bold; }
+    }
+
+    /* Ajuste para o QR Code em telas menores se necessário */
+    @media (max-width: 600px) {
+      #qr-code-container img {
+        max-width: 200px; /* Ajuste o tamanho do QR Code para telas menores */
+      }
+    }
+
+    /* Permitir rolagem em modo de tela cheia */
+    html:fullscreen,
+    html:-webkit-full-screen,
+    html:-moz-full-screen,
+    html:-ms-full-screen {
+      overflow-y: auto !important; /* Garante que a rolagem vertical seja possível */
+    }
+
+  
+html, body {
+  height: 100%;
+  overflow-y: auto !important;
+}
+
+.intro {
+  height: auto;
+}
+
+</style>
+</head>
+<body>
+
+<div class="intro" id="intro">
+  <img src="images/logo.png" alt="Logo" id="quiz-logo">
+  <h1>Quiz CIPA</h1>
+  <input id="nome" type="text" placeholder="Nome completo*">
+  <input id="email" type="email" placeholder="E-mail">
+  <input id="afiliacao" type="text" placeholder="Cargo">
+  <button onclick="startQuiz()">Iniciar Quiz</button> 
+</div>
+
+<div class="quiz-container hidden" id="quiz">
+  <div id="pergunta" class="question"></div>
+  <div class="options" id="opcoes"></div>
+  <div id="timer">
+    <div id="timer-bar"></div>
+  </div>
+</div>
+
+<div class="results-container hidden" id="results-container">
+  <h2>Resultado do Quiz</h2>
+  <div id="final-message"></div>
+  <div id="final-score"></div>
+  <div id="qr-code-container">
+    <p>Siga a Clínica Ultra-X no Instagram!</p>
+      <a href="https://www.instagram.com/clinicaultrax/" target="_blank" rel="noopener noreferrer">
+      <img src="images/ultra_x_qr.svg" alt="QR Code Ultra-X Instagram"></a></div>
+  <button onclick="restartQuiz()">Próximo Jogador</button>
+</div>
+
+<!-- Botão de Tela Cheia -->
+<button id="fullscreen-button" onclick="toggleFullscreen()">&#x26F6;</button> <!-- Ícone de tela cheia -->
+
+
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+<script>
+  // ************************************************************************
+  // **IMPORTANTE: Substitua com as suas credenciais do Firebase!**
+  // ************************************************************************
+  const firebaseConfig = {
+  apiKey: "AIzaSyCvsl8WzHXJosRKWDEAesXVgTa0-z1DcsM",
+  authDomain: "quizeventodados.firebaseapp.com",
+  projectId: "quizeventodados",
+  storageBucket: "quizeventodados.firebasestorage.app",
+  messagingSenderId: "180070189013",
+  appId: "1:180070189013:web:116eff6e4929fdffd31f5c",
+  measurementId: "G-4MCX99CV3F"
+};
+  // ************************************************************************
+
+  const perguntas = [
+  {
+    texto: "Qual é o principal objetivo da campanha Outubro Rosa?",
+    opcoes: [
+      "Arrecadar doações para hospitais",
+      "Incentivar o diagnóstico precoce do câncer de mama",
+      "Promover atividades esportivas",
+      "Vender produtos da cor rosa",
+    ],
+    correta: 1 // Resposta: B
+  },
+  {
+    texto: "Qual é o exame principal para detecção precoce do câncer de mama?",
+    opcoes: [
+      "Ultrassonografia",
+      "Mamografia",
+      "Ressonância magnética",
+      "Exame de sangue (hemograma)",
+    ],
+    correta: 1 // Resposta: B
+  },
+  {
+    texto: "A partir de qual idade o Ministério da Saúde recomenda a mamografia a cada dois anos para mulheres sem fatores de risco?",
+    opcoes: [
+      "30 anos",
+      "40 anos",
+      "50 anos",
+      "70 anos",
+    ],
+    correta: 2 // Resposta: C
+  },
+  {
+    texto: "Qual é o símbolo do Outubro Rosa?",
+    opcoes: [
+      "Um coração vermelho",
+      "Um laço rosa",
+      "Uma flor (rosa)",
+      "Um lenço rosa",
+    ],
+    correta: 1 // Resposta: B
+  },
+  {
+    texto: "Quais são alguns sinais de alerta do câncer de mama?",
+    opcoes: [
+      "Caroço na mama ou axila",
+      "Saída de líquido pelo mamilo",
+      "Mudanças na pele da mama (como retração)",
+      "Mamilo invertido (que não era assim antes)",
+      "Todas as anteriores",
+    ],
+    correta: 4 // Resposta: E
+  },
+  {
+    texto: "O Outubro Rosa busca incentivar:",
+    opcoes: [
+      "O cuidado e o amor próprio",
+      "A conscientização sobre a importância da prevenção",
+      "O apoio às pessoas em tratamento",
+      "A realização da mamografia",
+      "Todas as anteriores",
+    ],
+    correta: 4 // Resposta: E
+  }
+];
+
+  let indiceAtual = 0;
+  let tempoRestante = 22; // Tempo alterado para 22 segundos
+  let cronometro;
+  let pontuacao = 0;
+  let respostasDetalhes = []; // Array para armazenar detalhes das respostas
+  let db; // Variável para a instância do Firestore
+
+  // Inicializa o Firebase e o Firestore quando o DOM estiver pronto
+  document.addEventListener('DOMContentLoaded', function() {
+  // Garante rolagem ao focar nos inputs
+  document.querySelectorAll('input').forEach(input => {
+    input.addEventListener('focus', () => {
+      setTimeout(() => {
+        input.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 300); // atraso para o teclado abrir
+    });
+  });
+
+      try {
+          // Verifica se o Firebase já foi inicializado para evitar erros
+          if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+              firebase.initializeApp(firebaseConfig);
+              db = firebase.firestore(); // Inicializa o Firestore
+              console.log("Firebase e Firestore inicializados com sucesso.");
+          } else if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+              // Firebase já inicializado, apenas pegue a instância do Firestore
+              db = firebase.firestore();
+              console.log("Firestore inicializado (Firebase já estava pronto).");
+          } else {
+              console.error("SDK do Firebase não carregado.");
+          }
+      } catch (e) {
+          console.error("Erro ao inicializar Firebase: ", e);
+          alert("Erro crítico: Não foi possível conectar ao banco de dados. Por favor, avise o organizador.");
+      }
+  });
+
+  function startQuiz() {
+    const nome = document.getElementById("nome").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const afiliacao = document.getElementById("afiliacao").value.trim();
+
+    if (!nome) {
+      alert("Por favor, digite seu nome completo.");
+      return;
+    }
+
+    localStorage.setItem("quiz_nome", nome);
+    localStorage.setItem("quiz_email", email);
+    localStorage.setItem("quiz_afiliacao", afiliacao);
+
+    document.getElementById("intro").classList.add("hidden");
+    document.getElementById("quiz").classList.remove("hidden");
+
+    pontuacao = 0;
+    indiceAtual = 0; // Garante que o quiz comece da primeira pergunta
+    respostasDetalhes = []; // Limpa os detalhes das respostas para um novo quiz
+    mostrarPergunta();
+  }
+
+  function mostrarPergunta() {
+    if (indiceAtual >= perguntas.length) {
+      clearInterval(cronometro);
+
+      const quizContainer = document.getElementById("quiz");
+      const resultsContainer = document.getElementById("results-container");
+      const finalMessageDiv = document.getElementById("final-message");
+      const finalScoreDiv = document.getElementById("final-score");
+      let mensagemFinal = "";
+
+      if (pontuacao === 0) {
+        mensagemFinal = "Ops! Parece que precisamos de mais informação. Conhecimento é o primeiro passo para a prevenção!";
+      } else if (pontuacao === 20) {
+        mensagemFinal = "Você acendeu uma faísca de conscientização! Um ótimo começo!";
+      } else if (pontuacao === 40) {
+        mensagemFinal = "Você está mostrando que se importa! Seu conhecimento já ajuda a espalhar a prevenção.";
+      } else if (pontuacao === 60) {
+        mensagemFinal = "Muito bem! Você está no caminho certo e já sabe o essencial sobre a prevenção!";
+      } else if (pontuacao === 80) {
+        mensagemFinal = "Incrível! Você é um forte aliado na luta pela conscientização. Seu conhecimento tem grande impacto!";
+      } else if (pontuacao === 100) {
+        mensagemFinal = "Parabéns! Você é uma verdadeira fonte de informação, capaz de inspirar muitas pessoas a se cuidarem!";
+      } else if (pontuacao === 120) {
+        mensagemFinal = "UAU! Você gabaritou! Seu conhecimento sobre o Outubro Rosa é imenso e vital. Parabéns, você é um(a) verdadeiro(a) Embaixador(a) da Prevenção!";
+      } else {
+        // Mensagem genérica caso a pontuação não caia em nenhuma das anteriores
+        mensagemFinal = `Quiz finalizado! Você fez ${pontuacao} pontos.`;
+      }
+
+      const totalPossivel = perguntas.length * 20;
+      finalMessageDiv.textContent = mensagemFinal;
+      finalScoreDiv.textContent = `Sua pontuação: ${pontuacao} de ${totalPossivel} pontos.`;
+
+      quizContainer.classList.add("hidden");
+      resultsContainer.classList.remove("hidden");
+
+      const nomeSalvo = localStorage.getItem("quiz_nome") || "N/A";
+      const emailSalvo = localStorage.getItem("quiz_email") || "N/A";
+      const afiliacaoSalva = localStorage.getItem("quiz_afiliacao") || "N/A";
+
+
+      // ***** INÍCIO DA MODIFICAÇÃO PARA FIREBASE *****
+      if (db) { // Verifica se o Firestore (db) foi inicializado
+        db.collection("resultadosQuiz").add({ // "resultadosQuiz" será o nome da sua coleção
+            Nome: nomeSalvo,
+            Email: emailSalvo,
+            Cargo: afiliacaoSalva, 
+            Pontuação: `${pontuacao}/${totalPossivel}`,
+            Respostas: respostasDetalhes, // Adiciona o array com os detalhes das respostas
+            Timestamp: firebase.firestore.FieldValue.serverTimestamp() // Adiciona um timestamp do servidor
+        })
+        .then((docRef) => {
+            console.log("Dados salvos no Firestore com ID: ", docRef.id);
+        })
+        .catch((error) => {
+            console.error("Erro ao salvar dados no Firestore: ", error);
+            // Você pode querer adicionar uma mensagem para o usuário aqui se a gravação falhar
+            // alert("Houve um problema ao salvar sua pontuação. Tente novamente ou avise um organizador.");
+        });
+      } else {
+        console.error("Firestore (db) não está inicializado. Dados não foram salvos.");
+        // alert("Erro de conexão com o banco de dados. Sua pontuação pode não ter sido salva.");
+      }
+      // ***** FIM DA MODIFICAÇÃO PARA FIREBASE *****
+      return;
+    }
+
+    const pergunta = perguntas[indiceAtual];
+    const containerPergunta = document.getElementById("pergunta");
+    const containerOpcoes = document.getElementById("opcoes");
+
+    containerPergunta.innerHTML = `<strong>${pergunta.texto}</strong>`;
+
+    containerOpcoes.innerHTML = "";
+
+    pergunta.opcoes.forEach((opcao, index) => {
+      const div = document.createElement("div");
+      div.className = "option";
+      div.textContent = opcao;
+      div.onclick = () => verificarResposta(div, index);
+      containerOpcoes.appendChild(div);
+    });
+
+    tempoRestante = 22;
+    let tempoTotal = tempoRestante * 10;
+    let progresso = 100;
+    const barra = document.getElementById("timer-bar");
+    barra.style.width = "100%";
+
+    clearInterval(cronometro); // Limpa qualquer cronômetro anterior
+    cronometro = setInterval(() => {
+      tempoTotal--;
+      progresso = (tempoTotal / (tempoRestante * 10)) * 100; // Corrigido para usar tempoRestante original na proporção
+      barra.style.width = `${progresso}%`;
+
+      if (tempoTotal <= 0) {
+        clearInterval(cronometro);
+        mostrarCorreta(null); // Passa null pois o usuário não respondeu
+        // Registrar que a pergunta não foi respondida (tempo esgotou)
+        const perguntaAtual = perguntas[indiceAtual];
+        respostasDetalhes.push({
+          pergunta: perguntaAtual.texto,
+          respostaDada: "Nenhuma (tempo esgotado)",
+          status: "nao_respondida"
+        });
+      }
+    }, 100);
+  }
+
+  function mostrarCorreta(respondidoIndex) {
+    clearInterval(cronometro); // Garante que o cronômetro pare
+    const correta = perguntas[indiceAtual].correta;
+    const perguntaAtual = perguntas[indiceAtual]; // Para acesso fácil ao texto da pergunta
+    const opcoes = document.querySelectorAll(".option");
+
+    opcoes.forEach((opcao, i) => {
+      if (i === correta) {
+        opcao.classList.add("correct");
+      } else {
+        opcao.classList.add("fade-out");
+      }
+      opcao.classList.add("disabled");
+    });
+
+    // Se uma resposta foi dada e estava errada, marca como errada
+    // A opção correta já é marcada acima.
+    // A opção selecionada, se errada, será marcada em verificarResposta.
+    // Esta função é chamada também quando o tempo esgota (respondidoIndex é null).
+    if (respondidoIndex !== null && respondidoIndex !== correta) {
+        if (opcoes[respondidoIndex]) { // Verifica se a opção existe
+            opcoes[respondidoIndex].classList.add("wrong");
+             // Garante que a errada não seja 'fade-out' se foi a clicada
+            opcoes[respondidoIndex].classList.remove("fade-out");
+        }    
+    }
+
+
+    setTimeout(() => {
+      indiceAtual++;
+      mostrarPergunta();
+    }, 1500);
+  }
+
+  function verificarResposta(divSelecionada, index) {
+    clearInterval(cronometro);
+    const perguntaAtual = perguntas[indiceAtual];
+    const corretaIndex = perguntaAtual.correta;
+    const opcoes = document.querySelectorAll(".option");
+    let statusResposta = "";
+
+    if (index === corretaIndex) {
+      pontuacao += 20;
+      statusResposta = "correta";
+    } else {
+      divSelecionada.classList.add("wrong");
+      statusResposta = "errada";
+    }
+
+    respostasDetalhes.push({
+      pergunta: perguntaAtual.texto,
+      respostaDada: perguntaAtual.opcoes[index],
+      status: statusResposta
+    });
+
+    // Desabilita todas as opções e mostra a correta/erradas
+    opcoes.forEach((opcao, i) => {
+      if (i === corretaIndex) { // Correção: usar corretaIndex
+        opcao.classList.add("correct");
+      } else if (opcao !== divSelecionada) { // Esconde as outras erradas que não foram clicadas
+        opcao.classList.add("fade-out");
+      }
+      opcao.classList.add("disabled");
+    });
+
+    // Garante que a opção errada clicada não desapareça
+    if (index !== corretaIndex) {
+        divSelecionada.classList.remove("fade-out");
+    }
+
+
+    setTimeout(() => {
+      indiceAtual++;
+      mostrarPergunta();
+    }, 1500);
+  }
+
+  function restartQuiz() {
+    const introScreen = document.getElementById("intro");
+    const resultsContainer = document.getElementById("results-container");
+
+    resultsContainer.classList.add("hidden");
+    introScreen.classList.remove("hidden");
+    // As variáveis indiceAtual e pontuacao são resetadas em startQuiz()
+    // Também é bom limpar os campos do formulário se desejar
+    document.getElementById("nome").value = "";
+    document.getElementById("email").value = "";
+    document.getElementById("afiliacao").value = "";
+  }
+
+  // Função para alternar tela cheia
+  function toggleFullscreen() {
+  const doc = document.documentElement;
+  if (document.fullscreenElement) {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  } else {
+    if (doc.requestFullscreen) {
+      doc.requestFullscreen();
+    }
+  }
+}
+
+</script>
+</body>
+</html>
